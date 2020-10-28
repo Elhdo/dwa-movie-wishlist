@@ -1,6 +1,6 @@
 <template>
   <footer class="footer">
-    <img class="footer__logo" alt="The Movie DB" src="@/assets/logo-tmdb.svg" />
+    <img class="footer__logo" src="@/assets/logo-tmdb.svg" />
     <p class="footer__mention">
       This product uses the TMDb API but is not endorsed or certified by TMDb.
     </p>
@@ -15,6 +15,8 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
+@import '@/styles/utils';
+
 .footer {
   display: flex;
   align-items: center;

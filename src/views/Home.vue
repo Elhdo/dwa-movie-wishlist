@@ -1,27 +1,24 @@
 <template>
   <main class="home">
     <h1>Movie wishlist</h1>
-    <pre>{{ movies.length }}</pre>
-    <ul>
-      <li v-for="m in movies" :key="m.is">
-        {{ m.title }}
-      </li>
-    </ul>
+    <Listing :items="movies" />
   </main>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from '@vue/composition-api'
+
+import { mapGetters } from '@/store/utils'
+import Listing from '@/components/Listing.vue'
 
 export default defineComponent({
   name: 'Home',
-  setup() {
-    const movies = []
-
-    console.log(movies)
-
+  components: {
+    Listing,
+  },
+  setup(props, ctx) {
     return {
-      movies,
+      ...mapGetters(ctx, ['movies']),
     }
   },
 })

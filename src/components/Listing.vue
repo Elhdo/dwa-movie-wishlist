@@ -1,23 +1,52 @@
 <template>
-  <ul :class="`listing--${view}`">
+  <transition-group
+    name="staggered-fade"
+    tag="ul"
+    :class="`listing--${view}`"
+    @before-enter="beforeEnter"
+    @enter="enter"
+    @leave="leave"
+  >
     <li class="item" v-for="item in items" :key="item.id">
-      <h2 class="item__title">{{ item.title }}</h2>
+      <h2 class="item__title" @click="toggle(item)">{{ item.title }}</h2>
       <img
         :src="`https://image.tmdb.org/t/p/w500${item.poster_path}`"
         class="item__poster"
         :alt="item.title"
         v-if="view === 'grid'"
+        @click.stop="show(item)"
       />
+      <!-- Lazy loading -->
+      <!-- <img
+        v-lazy="`https://image.tmdb.org/t/p/w500${item.poster_path}`"
+        class="item__poster"
+        :alt="item.title"
+        v-if="view === 'grid'"
+        @click.stop="show(item)"
+      /> -->
+      <!-- <v-lazy-image
+        class="item__poster"
+        :src="`https://image.tmdb.org/t/p/w500${item.poster_path}`"
+        src-placeholder="http://lorempixel.com/400/200/""
+        :alt="item.title"
+        v-if="view === 'grid'"
+        @click.stop="show(item)"
+      /> -->
       <button
         type="button"
         class="item__like like"
         :class="{ liked: item.liked }"
-      ></button>
+        @click="toggle(item)"
+      >
+        <Icon :icon="{ symbol: 'heart' }" />
+      </button>
     </li>
-  </ul>
+  </transition-group>
 </template>
 
 <style lang="scss" scoped>
+@import '@/styles/utils';
+
 [class*='listing--'][class*='--grid'] {
   display: grid;
   grid-template-columns: 1fr;
@@ -124,10 +153,17 @@
 </style>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent } from '@vue/composition-api'
+import gsap from 'gsap'
+
+import { mapMutations } from '@/store/utils'
+import Icon from '@/components/Icon.vue'
 
 export default defineComponent({
   name: 'Listing',
+  components: {
+    Icon,
+  },
   props: {
     items: {
       type: Array,
@@ -137,6 +173,88 @@ export default defineComponent({
       type: String,
       default: 'grid',
     },
+  },
+  setup(props, ctx) {
+    const beforeEnter = el => {
+      el.style.opacity = 0
+      el.style.height = 0
+    }
+    // Async/await mode
+    const enter = async (el, done) => {
+      const delay = (el.dataset.index * 50) / 1000
+
+      await gsap.to(el, {
+        opacity: 1,
+        height: '43px',
+        duration: 1,
+        delay,
+      })
+
+      done()
+    }
+
+    // Promise mode
+    // const enter = (el, done) => {
+    //   const delay = el.dataset.index * 150
+    //   gsap
+    //     .to(el, {
+    //       opacity: 1,
+    //       height: '43px',
+    //       duration: 1,
+    //       delay,
+    //     })
+    //     .then(done)
+    // }
+
+    // Callback (aka old school) mode
+    // const enter = (el, done) => {
+    //   const delay = el.dataset.index * 150
+    //   gsap.to(el, {
+    //     opacity: 1,
+    //     height: '43px',
+    //     duration: 1,
+    //     delay,
+    //     onComplete: done,
+    //   })
+    // }
+
+    const leave = async (el, done) => {
+      const delay = (el.dataset.index * 50) / 1000
+
+      await gsap.to(el, {
+        opacity: 0,
+        height: 0,
+        duration: 1,
+        delay,
+      })
+
+      done()
+    }
+    const show = item => {
+      // Vue2 this.$emit('custom-event', item, item.title)
+      // this.$busEvent.$emit
+      // ctx.root.$ee.$emit('custom-event', item, item.title)
+      const { title, id } = item
+      ctx.root.$emit('popup-open', 'movie', { title, message: id })
+    }
+
+    // Vue2 this.$on('custom-event', cb)
+    // ctx.root.$on('custom-event', item => {
+    //   console.info('ON', item.title)
+    // })
+
+    // Get and rename the mutation
+    const { toggleLike } = mapMutations(ctx, { toggleLike: 'TOGGLE_LIKE' })
+    // Enhance payload with context
+    const toggle = item => toggleLike({ item, vm: ctx.root })
+
+    return {
+      toggle,
+      beforeEnter,
+      enter,
+      leave,
+      show,
+    }
   },
 })
 </script>
